@@ -127,7 +127,7 @@ INSERT INTO event_status(label) VALUES ('Réceptionné');
 INSERT INTO event_status(label) VALUES ('Fini');
 
 INSERT INTO event(name, stand_size, contact_objective, date_start, date_end, status_id, item_manager, location_id) 
-VALUES('Salon étudiant Studyrama', 100, 50, NOW()::timestamptz(0), NOW()::timestamptz(0), 1,
+VALUES('JPO', 100, 50, NOW()::timestamptz(0), NOW()::timestamptz(0), 1,
        (SELECT id FROM person WHERE last_name = 'ETAVARD'),
        (SELECT id FROM location WHERE city = 'Toulon' AND room = '007'));
 INSERT INTO event(name, stand_size, contact_objective, date_start, date_end, status_id, item_manager, location_id) 
@@ -142,10 +142,10 @@ INSERT INTO category(label) VALUES ('Goodies');
 INSERT INTO category(label) VALUES ('Transats');
 INSERT INTO category(label) VALUES ('RDD');
 
-INSERT INTO item(name, category_id) VALUES('Brochures Puissance Alpha Générale', (SELECT id FROM category WHERE label = 'Brochures'));
-INSERT INTO item(name, category_id) VALUES('Brochures Puissance Alpha Bachelors', (SELECT id FROM category WHERE label = 'Brochures'));
-INSERT INTO item(name, category_id) VALUES('Brochures Ecole FISE', (SELECT id FROM category WHERE label = 'Brochures'));
-INSERT INTO item(name, category_id) VALUES('Echarpes RDD 2024', (SELECT id FROM category WHERE label = 'RDD'));
+INSERT INTO item(name, category_id) VALUES('Puissance Alpha Générale', (SELECT id FROM category WHERE label = 'Brochures'));
+INSERT INTO item(name, category_id) VALUES('Puissance Alpha Bachelors', (SELECT id FROM category WHERE label = 'Brochures'));
+INSERT INTO item(name, category_id) VALUES('FISE', (SELECT id FROM category WHERE label = 'Brochures'));
+INSERT INTO item(name, category_id) VALUES('RDD 2024', (SELECT id FROM category WHERE label = 'RDD'));
 
 INSERT INTO item(name, category_id) VALUES('Vie Etudiante', (SELECT id FROM category WHERE label = 'Kakémonos'));
 INSERT INTO item(name, category_id) VALUES('R&D', (SELECT id FROM category WHERE label = 'Kakémonos'));
@@ -159,6 +159,15 @@ INSERT INTO item(name, category_id) VALUES('DNF', (SELECT id FROM category WHERE
 INSERT INTO item(name, category_id) VALUES('BIOST', (SELECT id FROM category WHERE label = 'Kakémonos'));
 INSERT INTO item(name, category_id) VALUES('CIN', (SELECT id FROM category WHERE label = 'Kakémonos'));
 INSERT INTO item(name, category_id) VALUES('MPSI', (SELECT id FROM category WHERE label ='Kakémonos'));
+
+INSERT INTO item(name, category_id) VALUES('Règles', (SELECT id FROM category WHERE label ='Goodies'));
+INSERT INTO item(name, category_id) VALUES('Stylos', (SELECT id FROM category WHERE label ='Goodies'));
+INSERT INTO item(name, category_id) VALUES('Goodies', (SELECT id FROM category WHERE label ='Goodies'));
+
+INSERT INTO item(name, category_id) VALUES('Kakémonos', (SELECT id FROM category WHERE label ='Kakémonos'));
+
+
+
 
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(1, 3, 280);
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(1, 2, 100);
@@ -177,4 +186,9 @@ INSERT INTO item_location(item_id, location_id, quantity) VALUES(13, 3, 1);
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(14, 3, 1);
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(15, 3, 1);
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(16, 3, 1);
+INSERT INTO item_location(item_id, location_id, quantity) VALUES(17, 3, 100);
+INSERT INTO item_location(item_id, location_id, quantity) VALUES(18, 3, 1000);
+INSERT INTO item_location(item_id, location_id, quantity) VALUES(19, 3, 1500);
+INSERT INTO item_location(item_id, location_id, quantity) VALUES(20, 3, 100);
+
 
