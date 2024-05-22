@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS item_location (
 -- User and Role
 CREATE TABLE IF NOT EXISTS users (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    email VARCHAR(30) NOT NULL
+    email VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS role (
@@ -148,17 +148,17 @@ INSERT INTO item(name, category_id) VALUES('Brochures Ecole FISE', (SELECT id FR
 INSERT INTO item(name, category_id) VALUES('Echarpes RDD 2024', (SELECT id FROM category WHERE label = 'RDD'));
 
 INSERT INTO item(name, category_id) VALUES('Vie Etudiante', (SELECT id FROM category WHERE label = 'Kakémonos'));
-INSERT INTO item(name, category_id) VALUES('R&D', (SELECT id FROM category WHERE label = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES('Ecole Entreprises', (SELECT id FROM category WHERE label = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES('2 campus', (SELECT id FROM category WHERE label = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES('Ingé/Bachelors', (SELECT id FROM category WHERE labal = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES('Cyber', (SELECT id FROM category WHERE labal = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES("Chiffres clés", (SELECT id FROM category WHERE label = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES("Dev Jeux Vidéos", (SELECT id FROM category WHERE label = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES("DNF", (SELECT id FROM category WHERE label = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES("BIOST", (SELECT id FROM category WHERE label = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES("CIN", (SELECT id FROM category WHERE labal = "Kakémonos"));
-INSERT INTO item(name, category_id) VALUES("MPSI", (SELECT id FROM category WHERE label ="Kakémonos"));
+INSERT INTO item(name, category_id) VALUES('R&D', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('Ecole Entreprises', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('2 campus', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('Ingé/Bachelors', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('Cyber', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('Chiffres clés', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('Dev Jeux Vidéos', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('DNF', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('BIOST', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('CIN', (SELECT id FROM category WHERE label = 'Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('MPSI', (SELECT id FROM category WHERE label ='Kakémonos'));
 
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(1, 3, 280);
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(1, 2, 100);

@@ -1,2 +1,3 @@
-def reserve_items(type -> str = "None", label -> str = "None", nbr -> int = 0):
+def reserve_items(type: str = "None", label: str = "None", nbr: int = 0):
+    print("oui")
     
