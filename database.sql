@@ -165,6 +165,9 @@ INSERT INTO item(name, category_id) VALUES('Stylos', (SELECT id FROM category WH
 INSERT INTO item(name, category_id) VALUES('Goodies', (SELECT id FROM category WHERE label ='Goodies'));
 
 INSERT INTO item(name, category_id) VALUES('Kakémonos', (SELECT id FROM category WHERE label ='Kakémonos'));
+INSERT INTO item(name, category_id) VALUES('Lettres', (SELECT id FROM category WHERE label ='Lettres'));
+INSERT INTO item(name, category_id) VALUES('Transats', (SELECT id FROM category WHERE label ='Transats'));
+
 
 
 
@@ -190,5 +193,8 @@ INSERT INTO item_location(item_id, location_id, quantity) VALUES(17, 3, 100);
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(18, 3, 1000);
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(19, 3, 1500);
 INSERT INTO item_location(item_id, location_id, quantity) VALUES(20, 3, 100);
+INSERT INTO item_location(item_id, location_id, quantity) VALUES(21, 3, 1000);
+INSERT INTO item_location(item_id, location_id, quantity) VALUES(22, 3, 50);
+
 
 

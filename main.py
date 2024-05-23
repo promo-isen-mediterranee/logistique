@@ -1,5 +1,5 @@
 from customTypes import _event
-from controller import urllib_to_json, check_dates_event
+from controller import urllib_to_json, update_stock
 import urllib.request
 import json
 from controller import reserve_items
@@ -8,6 +8,9 @@ def checkMsg(body: str):
     if body.startswith("[Event]"):
         analyseMsg(body)
 
+# TODO -> utiliser la fonction update_stock() une fois tout les jours ?
+# La fonction check si la date d'aujourd'hui est incluse dans l'intervalle de date de l'event 
+# Et met à jour le stock en conséquence
 
 def analyseMsg(body: str):
     newBody = body.split("{", 1)[1]
@@ -41,16 +44,16 @@ def analyseMsg(body: str):
         # Besoin des kakémonos (Générique et Chiffres clés) + plaquettes + goodies sans sac
         reserve_items(event = event, type="Kakémonos", label="Ingé/Bachelors", nbr=1)
         reserve_items(event = event, type="Kakémonos", label="2 campus", nbr=1)
-        reserve_items(event = event, type="Goodies", nbr=event.contact_objective or 25)
+        reserve_items(event = event, label="Goodies", nbr=event.contact_objective or 25)
         return True
     elif event.name.lower() == "préparation":
-        reserve_items(event = event, type="Goodies", nbr=event.contact_objective or 50)
+        reserve_items(event = event, label="Goodies", nbr=event.contact_objective or 50)
         return True
     elif event.name.lower().find("remise des diplômes") != -1 or event.name.lower().find("remise des diplomes") != -1:
         # Besoin des kakémonos + lettres + bâches + chaises longues + identification sièges réservées
-        reserve_items(event = event, type="Lettres", nbr=1)
-        reserve_items(event = event, type="RDD", nbr=1)
-        reserve_items(event = event, type="Transats", nbr=4)
+        reserve_items(event = event, label="Lettres", nbr=1)
+        reserve_items(event = event, label="RDD", nbr=1)
+        reserve_items(event = event, label="Transats", nbr=4)
         return True
     else:
         # Besoin des kakémonos en fonction de la taille du stand + plaquettes + goodies + bâches
