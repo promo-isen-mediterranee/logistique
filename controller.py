@@ -4,17 +4,11 @@ import urllib.request, urllib.parse
 import json
 import os
 from dotenv import load_dotenv
+from messaging import urllib_to_json
 
 load_dotenv()
 api_event = os.getenv('API_EVENT')
 api_stock = os.getenv('API_STOCK')
-
-
-def urllib_to_json(byte_obj):
-    events = byte_obj.read()
-    encoding = byte_obj.info().get_content_charset('utf-8')
-    JSON_object = json.loads(events.decode(encoding))
-    return JSON_object
 
 
 def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):

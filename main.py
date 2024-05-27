@@ -74,8 +74,7 @@ def analyseMsg(body: str):
 
 
 if __name__ == "__main__":
-    # for _ in range(3):
-    #     send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")    
+    send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")    
     events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
     for e in events:
         checkMsg(f"[Event]{e}")
