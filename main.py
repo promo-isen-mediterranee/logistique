@@ -29,8 +29,9 @@ def analyseMsg(body: str):
         return True
     elif (event.name.lower().find("journée portes ouvertes") != -1) or (event.name.lower().find("jpo") != -1) or (event.name.lower().find("soirée portes ouvertes") != -1) or (event.name.lower().find("spo") != -1):
         # Besoin des kakémonos (VE, Ingé, Bachelor, CIN, BIOST, International, Génériques) + plaquettes + goodies
-        reserve_items(event = event, label="Goodies", nbr=event.contact_objective)
-        reserve_items(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
+        # reserve_items(event = event, label="Goodies", nbr=event.contact_objective)
+        # reserve_items(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
+        update_stock(event, "Kakémonos", "Ingé/Bachelors", event.contact_objective)
         # reserve_items(event = event, type="Kakémonos", label="Ingé/Bachelors", nbr=event.contact_objective)
         # reserve_items(event = event, type="Kakémonos", label="CIN", nbr=event.contact_objective)
         # reserve_items(event = event, type="Kakémonos", label="BIOST", nbr=event.contact_objective)
@@ -39,6 +40,7 @@ def analyseMsg(body: str):
     elif event.name.find("Retour lycée") != -1 or event.name.find("Intervention devant classe") != -1:
         # Besoin de plaquettes
         reserve_items(event = event, label="FISE",nbr=event.contact_objective or 50)
+        update_stock(event, type = "Brochures", label = "FISE", nbr = event.contact_objective)
         return True
     elif event.name.find("Accueil lycée") != -1:
         # Besoin des kakémonos (Générique et Chiffres clés) + plaquettes + goodies sans sac

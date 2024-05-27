@@ -1,4 +1,5 @@
--- Item, Location, ItemLocation, category
+SET timezone = 'Europe/Paris';
+
 CREATE TABLE IF NOT EXISTS category(
     id SERIAL PRIMARY KEY,
     label VARCHAR(50) NOT NULL,
@@ -9,6 +10,7 @@ CREATE TABLE IF NOT EXISTS item (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
     category_id INT REFERENCES category(id) ON UPDATE CASCADE,
+    gain INT NOT NULL DEFAULT 100,
     UNIQUE(name, category_id)
 );
 
@@ -30,7 +32,12 @@ CREATE TABLE IF NOT EXISTS item_location (
 -- User and Role
 CREATE TABLE IF NOT EXISTS users (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    email VARCHAR(50) NOT NULL
+    username VARCHAR(101) NOT NULL,
+    mail VARCHAR(50) NOT NULL,
+    nom VARCHAR(50) NOT NULL,
+    prenom VARCHAR(50) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_authenticated BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS role (
@@ -42,6 +49,24 @@ CREATE TABLE IF NOT EXISTS user_role (
     user_id uuid REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
     role_id INT REFERENCES role(id) ON UPDATE CASCADE,
     CONSTRAINT user_role_pkey PRIMARY KEY (user_id, role_id)
+);
+
+CREATE TABLE IF NOT EXISTS permission (
+    id SERIAL PRIMARY KEY,
+    label VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS role_permission (
+    role_id INT REFERENCES role(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    permission_id INT REFERENCES permission(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT role_permission_pkey PRIMARY KEY (role_id, permission_id)
+);
+
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id SERIAL PRIMARY KEY,
+    ip_address VARCHAR(15) NOT NULL UNIQUE,
+    attempts INT NOT NULL DEFAULT 0,
+    lockout_until TIMESTAMP NOT NULL DEFAULT NOW()::timestamptz(0)
 );
 
 -- Event, EventStatus and Person
@@ -71,6 +96,12 @@ CREATE TABLE IF NOT EXISTS event (
     UNIQUE(name, date_start, date_end, location_id)
 );
 
+CREATE TABLE IF NOT EXISTS attendee(
+    user_id uuid REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    event_id INT REFERENCES event(id) ON UPDATE CASCADE,
+    CONSTRAINT attendee_pkey PRIMARY KEY (user_id, event_id)
+);
+
 CREATE TABLE IF NOT EXISTS event_status_history (
     id SERIAL PRIMARY KEY,
     set_on TIMESTAMP NOT NULL,
@@ -84,6 +115,7 @@ CREATE TABLE IF NOT EXISTS reserved_item (
     item_location_id INT REFERENCES item_location(id) ON UPDATE CASCADE,
     event_id INT REFERENCES event(id) ON UPDATE CASCADE,
     quantity INT NOT NULL,
+    quantity_ret INT DEFAULT NULL,
     status BOOLEAN NOT NULL,
     reserved_on TIMESTAMP NOT NULL,
     reserved_by uuid REFERENCES users(id) ON UPDATE CASCADE,
@@ -92,26 +124,30 @@ CREATE TABLE IF NOT EXISTS reserved_item (
 
 -- Alert and emails
 CREATE TABLE IF NOT EXISTS alert (
-    id SERIAL PRIMARY KEY
+    id SERIAL PRIMARY KEY,
+    user_id uuid REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    role_id INT REFERENCES role(id) ON UPDATE CASCADE,
+    set_on TIMESTAMP NOT NULL
 );
-
-CREATE TABLE IF NOT EXISTS alert_email (
-    email VARCHAR(30) PRIMARY KEY,
-    alert_id INT REFERENCES alert(id) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-set timezone='Europe/Paris';
 
 INSERT INTO location (address, city, room) VALUES ('Palais Neptune', 'Toulon', '007');
 INSERT INTO location (address, city, room) VALUES ('Parc Chanot', 'Marseille', '013');
 INSERT INTO location (address, city, room) VALUES ('ISEN, Place Georges Pompidou', 'Toulon', '456');
 
-INSERT INTO users(email) VALUES ('marc.etavard@isen.yncrea.fr');
-INSERT INTO users(email) VALUES ('alex.olivier@isen.yncrea.fr');
-INSERT INTO users(email) VALUES ('definir.a@isen.yncrea.fr');
-INSERT INTO users(email) VALUES ('corentin.thibaud@isen.yncrea.fr');
-INSERT INTO users(email) VALUES ('jaun.gomez-sanchez@isen.yncrea.fr');
-INSERT INTO users(email) VALUES ('dorian.bourdier@isen.yncrea.fr');
+INSERT INTO users(username, mail, prenom, nom) VALUES ('marc.etavard', 'marc.etavard@isen.yncrea.fr', 'Marc', 'Etavard');
+INSERT INTO users(username, mail, prenom, nom) VALUES ('alex.olivier', 'alex.olivier@isen.yncrea.fr', 'Alëx', 'Olivier');
+INSERT INTO users(username, mail, prenom, nom) VALUES ('corentin.thibaud', 'corentin.thibaud@isen.yncrea.fr', 'Corentin', 'Thibaud');
+INSERT INTO users(username, mail, prenom, nom) VALUES ('juan.gomez-sanchez', 'juan.gomez-sanchez@isen.yncrea.fr', 'Juan', 'Gomez-Sanchez');
+INSERT INTO users(username, mail, prenom, nom) VALUES ('dorian.bourdier', 'dorian.bourdier@isen.yncrea.fr', 'Dorian', 'Bourdier');
+
+INSERT INTO role(label) VALUES ('Admin');
+
+INSERT INTO user_role(user_id, role_id) VALUES((SELECT id FROM users WHERE username = 'marc.etavard'), 1);
+INSERT INTO user_role(user_id, role_id) VALUES((SELECT id FROM users WHERE username = 'alex.olivier'), 1);
+INSERT INTO user_role(user_id, role_id) VALUES((SELECT id FROM users WHERE username = 'corentin.thibaud'), 1);
+INSERT INTO user_role(user_id, role_id) VALUES((SELECT id FROM users WHERE username = 'juan.gomez-sanchez'), 1);
+INSERT INTO user_role(user_id, role_id) VALUES((SELECT id FROM users WHERE username = 'dorian.bourdier'), 1);
+
 
 INSERT INTO person(last_name, first_name) VALUES ('ETAVARD', 'Marc');
 INSERT INTO person(last_name, first_name) VALUES ('OLIVIER', 'Alëx');
@@ -198,3 +234,44 @@ INSERT INTO item_location(item_id, location_id, quantity) VALUES(22, 3, 50);
 
 
 
+INSERT INTO permission(label) VALUES ('Read Event');
+INSERT INTO permission(label) VALUES ('Write Event');
+INSERT INTO permission(label) VALUES ('Read Status');
+INSERT INTO permission(label) VALUES ('Read Event History');
+INSERT INTO permission(label) VALUES ('Read Item');
+INSERT INTO permission(label) VALUES ('Write Item');
+INSERT INTO permission(label) VALUES ('Read Location');
+INSERT INTO permission(label) VALUES ('Write Location');
+INSERT INTO permission(label) VALUES ('Read Category');
+INSERT INTO permission(label) VALUES ('Write Category');
+INSERT INTO permission(label) VALUES ('Write Reserve Item');
+INSERT INTO permission(label) VALUES ('Read Reserve Item');
+INSERT INTO permission(label) VALUES ('Read User');
+INSERT INTO permission(label) VALUES ('Write User');
+INSERT INTO permission(label) VALUES ('Read Role');
+INSERT INTO permission(label) VALUES ('Write Role');
+INSERT INTO permission(label) VALUES ('Write User Role');
+INSERT INTO permission(label) VALUES ('Read Permission');
+INSERT INTO permission(label) VALUES ('Read Role Permission');
+INSERT INTO permission(label) VALUES ('Write Role Permission');
+
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 1);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 2);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 3);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 4);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 5);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 6);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 7);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 8);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 9);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 10);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 11);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 12);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 13);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 14);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 15);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 16);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 17);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 18);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 19);
+INSERT INTO role_permission(role_id, permission_id) VALUES(1, 20);

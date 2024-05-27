@@ -10,47 +10,75 @@ def urllib_to_json(byte_obj):
     JSON_object = json.loads(events.decode(encoding))
     return JSON_object
 
+
 def reserve_items(event, type: str = "", label: str = "", nbr: int = 0):
     """
     Fonction qui sert à réserver tout les items pour un évènement donné 
     et mettre le stock à jour en conséquence
     """
-
     item = find_item(name=label, type=type)  
     item_location_id = item["id"]
+    actual_stock = item["quantity"]
 
     reserve_request = {
         "eventId": event.id,
         "item_locationId": item_location_id,
-        "status": True,
+        "status": False,
         "quantity": nbr,
     }
+    overlapping = get_overlapping_events(event)
+    if nbr > actual_stock:
+        #TODO Alerte Stock insufisant
+        pass
+
+    predicted = 0        
+    i = 0
+    if overlapping != []:
+        for e in overlapping:
+            if e["id"] != event.id:
+                reserved_items = urllib_to_json(urllib.request.urlopen(f"http://localhost:5100/stock/reservedItem/getAll/{event.id}"))
+                predicted+=reserved_items[i]["quantity"]
+                i+=1
+  
+    if actual_stock - predicted < nbr:
+        #TODO Alerte Stock insufisant
+        pass
     data = urllib.parse.urlencode(reserve_request).encode()
+    # req =  urllib.request.Request("http://promo-api.prinv.isen.fr/stock/reserveItem", data=data, method="POST")
     req =  urllib.request.Request("http://localhost:5100/stock/reserveItem", data=data, method="POST")
-    resp_reserved = urllib.request.urlopen(req)
+    # resp_reserved = urllib.request.urlopen(req)
 
+    return 0
 
-def check_dates_event(event):
+def get_overlapping_events(event):
     """
     Fonction qui sert à vérifier si les dates de début et de fin d'un évènement
     dont la logistique est encore à faire chevauchent un autre évènement
     Lorsque la logistique d'un évènement a été effectuée, le matériel n'est pas disponible entre
     la date de début - 2j et de fin + 1j
+    Renvoie la liste des événements qui chevauchent l'événement donné
     """
+    overlapping_events = []
+
     if event.status["label"] == "A faire":
+        # events = urllib_to_json(urllib.request.urlopen("http://promo-api.prinv.isen.fr/event/getAll"))
         events = urllib_to_json(urllib.request.urlopen("http://localhost:5000/event/getAll"))
 
         date_start = datetime.strptime(event.date_start, '%Y-%m-%d') #%H:%M')
         date_end = datetime.strptime(event.date_end, '%Y-%m-%d')
-
-        date_interval = (date_start - timedelta(days=2), date_end + timedelta(days=1))
+        date_interval = [date_start - timedelta(days=2), date_end + timedelta(days=1)]
+        
         for e in events:
-            if e["date_start"] in date_interval:
-                return 1
-    return 0
+            if e["id"] == event.id:
+                continue
+            e_start = datetime.strptime(e["date_start"], '%Y-%m-%d') - timedelta(days=2)
+            e_end = datetime.strptime(e["date_end"], '%Y-%m-%d') + timedelta(days=1)
+            if (date_interval[0] <= e_end and date_interval[0] >= e_start) or (date_interval[1] <= e_end and date_interval[1] >= e_start):
+                overlapping_events.append(e)
+    return overlapping_events
 
 
-def find_item(materials, name: str = "", type:str = ""):
+def find_item(name: str = "", type:str = ""):
     # materials = urllib_to_json(urllib.request.urlopen("http://promo-api.prinv.isen.fr/stock/items/getAll"))
     materials = urllib_to_json(urllib.request.urlopen("http://localhost:5100/stock/item/getAll"))
     for material in materials:
@@ -62,21 +90,21 @@ def find_item(materials, name: str = "", type:str = ""):
 
 
 def update_stock(event, label, type, nbr):
-    overlapping = check_dates_event(event)
-
     item = find_item(name=label, type=type)
     item_id = item["item_id"]["id"]
     location_id = item["location_id"]["id"]
     actual_stock = item["quantity"]
+    quantity_ret = item["quantity_ret"] if "quantity_ret" in item else -1 
+    # si quantity_ret pas specifiée
     category = item["item_id"]["category_id"]["label"]
 
     today = datetime.now().date()
     date_start = datetime.strptime(event.date_start, '%Y-%m-%d')#%H:%M')
     date_end = datetime.strptime(event.date_end, '%Y-%m-%d')
-    date_interval = (date_start - timedelta(days=2), date_end + timedelta(days=1))
-    today_in_interval = (date_interval[0].date() <= today <= date_interval[1].date())
+    date_start = (date_start - timedelta(days=2)).date()
+    date_end = (date_end + timedelta(days=1)).date()
 
-    if not overlapping and today_in_interval and actual_stock >= nbr:
+    if today == date_start and actual_stock >= nbr:
         update_stock = {
             "name": label,
             "quantity": actual_stock - nbr,
@@ -84,8 +112,21 @@ def update_stock(event, label, type, nbr):
             "category": category,
         }
         data = urllib.parse.urlencode(update_stock).encode()
+        # req =  urllib.request.Request(f"http://promo-api.prinv.isen.fr/stock/item/{item_id}/{location_id}", data=data, method="PUT")
         req =  urllib.request.Request(f"http://localhost:5100/stock/item/{item_id}/{location_id}", data=data, method="PUT")
         resp = urllib.request.urlopen(req)
-    else:
-        abort(400, "Erreur lors de la réservation des items, quantité insuffisante ou date invalide")
-    return True
+    elif today == date_start and actual_stock <= nbr:
+        abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
+    elif quantity_ret != -1 and today == date_end and event.status["label"] == "Fini":
+        update_stock = {
+            "name": label,
+            "quantity": actual_stock + quantity_ret,
+            "location.id": location_id,
+            "category": category,
+        }
+        gain = (quantity_ret / nbr) * 100 # TODO
+        data = urllib.parse.urlencode(update_stock).encode()
+        # req =  urllib.request.Request(f"http://promo-api.prinv.isen.fr/stock/item/{item_id}/{location_id}", data=data, method="PUT")
+        req =  urllib.request.Request(f"http://localhost:5100/stock/item/{item_id}/{location_id}", data=data, method="PUT")
+        resp = urllib.request.urlopen(req)
+    return 0
