@@ -2,6 +2,12 @@ from datetime import datetime, timedelta
 from os import abort
 import urllib.request, urllib.parse
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+api_event = os.getenv('API_EVENT')
+api_stock = os.getenv('API_STOCK')
 
 
 def urllib_to_json(byte_obj):
@@ -11,10 +17,9 @@ def urllib_to_json(byte_obj):
     return JSON_object
 
 
-def reserve_items(event, type: str = "", label: str = "", nbr: int = 0):
+def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
     """
-    Fonction qui sert à réserver tout les items pour un évènement donné 
-    et mettre le stock à jour en conséquence
+    Fonction qui sert à réserver un item pour un évènement donné 
     """
     item = find_item(name=label, type=type)  
     item_location_id = item["id"]
@@ -36,7 +41,7 @@ def reserve_items(event, type: str = "", label: str = "", nbr: int = 0):
     if overlapping != []:
         for e in overlapping:
             if e["id"] != event.id:
-                reserved_items = urllib_to_json(urllib.request.urlopen(f"http://localhost:5100/stock/reservedItem/getAll/{event.id}"))
+                reserved_items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/reservedItem/getAll/{event.id}"))
                 predicted+=reserved_items[i]["quantity"]
                 i+=1
   
@@ -44,8 +49,7 @@ def reserve_items(event, type: str = "", label: str = "", nbr: int = 0):
         #TODO Alerte Stock insufisant
         pass
     data = urllib.parse.urlencode(reserve_request).encode()
-    # req =  urllib.request.Request("http://promo-api.prinv.isen.fr/stock/reserveItem", data=data, method="POST")
-    req =  urllib.request.Request("http://localhost:5100/stock/reserveItem", data=data, method="POST")
+    req =  urllib.request.Request(f"{api_stock}/stock/reserveItem", data=data, method="POST")
     # resp_reserved = urllib.request.urlopen(req)
 
     return 0
@@ -61,8 +65,7 @@ def get_overlapping_events(event):
     overlapping_events = []
 
     if event.status["label"] == "A faire":
-        # events = urllib_to_json(urllib.request.urlopen("http://promo-api.prinv.isen.fr/event/getAll"))
-        events = urllib_to_json(urllib.request.urlopen("http://localhost:5000/event/getAll"))
+        events = urllib_to_json(urllib.request.urlopen(f"{api_event}/event/getAll"))
 
         date_start = datetime.strptime(event.date_start, '%Y-%m-%d') #%H:%M')
         date_end = datetime.strptime(event.date_end, '%Y-%m-%d')
@@ -79,8 +82,7 @@ def get_overlapping_events(event):
 
 
 def find_item(name: str = "", type:str = ""):
-    # materials = urllib_to_json(urllib.request.urlopen("http://promo-api.prinv.isen.fr/stock/items/getAll"))
-    materials = urllib_to_json(urllib.request.urlopen("http://localhost:5100/stock/item/getAll"))
+    materials = urllib_to_json(urllib.request.urlopen(f"{api_stock}/item/getAll"))
     for material in materials:
         if material["item_id"]["name"] == name and material["item_id"]["category_id"]["label"] == type:
             return material
@@ -112,8 +114,7 @@ def update_stock(event, label, type, nbr):
             "category": category,
         }
         data = urllib.parse.urlencode(update_stock).encode()
-        # req =  urllib.request.Request(f"http://promo-api.prinv.isen.fr/stock/item/{item_id}/{location_id}", data=data, method="PUT")
-        req =  urllib.request.Request(f"http://localhost:5100/stock/item/{item_id}/{location_id}", data=data, method="PUT")
+        req =  urllib.request.Request(f"{api_stock}/item/{item_id}/{location_id}", data=data, method="PUT")
         resp = urllib.request.urlopen(req)
     elif today == date_start and actual_stock <= nbr:
         abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
@@ -126,7 +127,26 @@ def update_stock(event, label, type, nbr):
         }
         gain = (quantity_ret / nbr) * 100 # TODO
         data = urllib.parse.urlencode(update_stock).encode()
-        # req =  urllib.request.Request(f"http://promo-api.prinv.isen.fr/stock/item/{item_id}/{location_id}", data=data, method="PUT")
-        req =  urllib.request.Request(f"http://localhost:5100/stock/item/{item_id}/{location_id}", data=data, method="PUT")
+        req =  urllib.request.Request(f"{api_stock}/item/{item_id}/{location_id}", data=data, method="PUT")
         resp = urllib.request.urlopen(req)
     return 0
+
+
+def minimal_stock(event, type, label):
+    """
+    Fonction qui définit le minimum de matériel nécessaire en fonction
+    du nom et de la catégorie de l'item pour ne pas avoir d'alertes
+    """
+    if type == "Brochures" or type == "Goodies":
+        return 100
+    elif type == "Kakémonos":
+        return 1
+    elif type == "Feuilles" and (label == "Labyrinthe" or label == "Blanches" or label == "Ckoi1Ingé"):
+        return 3
+    elif type == "Médailles" and label == "Crayon" or label == "Ingé Quizz":
+        return 3
+    elif type == "Tablettes" and ((event.name.lower().find("journée portes ouvertes") != -1) or (event.name.lower().find("jpo") != -1)):
+        return 5
+    elif type == "Tablettes" and ((event.name.lower().find("soirée portes ouvertes") != -1) or (event.name.lower().find("spo") != -1)):
+        return 2
+    
