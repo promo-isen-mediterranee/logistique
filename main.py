@@ -67,6 +67,7 @@ def analyseMsg(body: str):
 
 
 if __name__ == "__main__":
-    events = urllib_to_json(urllib.request.urlopen("http://localhost:5000/event/getAll"))
+    events = urllib_to_json(urllib.request.urlopen("http://127.0.0.1:5000/event/getAll"))
     for e in events:
         checkMsg(f"[Event]{e}")
+    

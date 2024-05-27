@@ -125,9 +125,9 @@ CREATE TABLE IF NOT EXISTS reserved_item (
 -- Alert and emails
 CREATE TABLE IF NOT EXISTS alert (
     id SERIAL PRIMARY KEY,
-    user_id uuid REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
     role_id INT REFERENCES role(id) ON UPDATE CASCADE,
-    set_on TIMESTAMP NOT NULL
+    set_on TIMESTAMP NOT NULL,
+    mail VARCHAR(50)
 );
 
 INSERT INTO location (address, city, room) VALUES ('Palais Neptune', 'Toulon', '007');
