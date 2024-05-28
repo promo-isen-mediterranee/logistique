@@ -1,3 +1,4 @@
+import requests
 from customTypes import _event
 from controller import urllib_to_json
 import urllib.request
@@ -74,10 +75,12 @@ def analyseMsg(body: str):
 
 
 if __name__ == "__main__":
+    print("Service Logistique started")
     # send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")
+
     events = send_request(f"{api_event}/getAll")
-    
-    for e in events:
-        checkMsg(f"[Event]{e}")
-    send_email_to_role("Alerte : Evènement imminent, 7 jours restants !", 
-                        f"L'évènement {e['name']} commence dans 7 jours, veuillez finir la logistique au plus vite !")
+    # print(events)
+    # urllib_to_json(events)
+    # checkMsg(f"[Event]{e}")
+    # send_email_to_role("Alerte : Evènement imminent, 7 jours restants !", 
+    #                     f"L'évènement {e['name']} commence dans 7 jours, veuillez finir la logistique au plus vite !")
