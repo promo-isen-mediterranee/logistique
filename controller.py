@@ -43,7 +43,7 @@ def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
         #TODO Alerte Stock insufisant
         pass
     data = urllib.parse.urlencode(reserve_request).encode()
-    req =  urllib.request.Request(f"{api_stock}/stock/reserveItem", data=data, method="POST")
+    req =  urllib.request.Request(f"{api_stock}/reserveItem", data=data, method="POST")
     # resp_reserved = urllib.request.urlopen(req)
 
     return 0
@@ -59,17 +59,17 @@ def get_overlapping_events(event):
     overlapping_events = []
 
     if event.status["label"] == "A faire":
-        events = urllib_to_json(urllib.request.urlopen(f"{api_event}/event/getAll"))
+        events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
 
-        date_start = datetime.strptime(event.date_start, '%Y-%m-%d') #%H:%M')
-        date_end = datetime.strptime(event.date_end, '%Y-%m-%d')
+        date_start = datetime.strptime(event.date_start, '%a, %d %b %Y %H:%M:%S %Z')
+        date_end = datetime.strptime(event.date_end, '%a, %d %b %Y %H:%M:%S %Z')
         date_interval = [date_start - timedelta(days=2), date_end + timedelta(days=1)]
         
         for e in events:
             if e["id"] == event.id:
                 continue
-            e_start = datetime.strptime(e["date_start"], '%Y-%m-%d') - timedelta(days=2)
-            e_end = datetime.strptime(e["date_end"], '%Y-%m-%d') + timedelta(days=1)
+            e_start = datetime.strptime(e["date_start"], '%a, %d %b %Y %H:%M:%S %Z') - timedelta(days=2)
+            e_end = datetime.strptime(e["date_end"], '%a, %d %b %Y %H:%M:%S %Z') + timedelta(days=1)
             if (date_interval[0] <= e_end and date_interval[0] >= e_start) or (date_interval[1] <= e_end and date_interval[1] >= e_start):
                 overlapping_events.append(e)
     return overlapping_events
@@ -94,11 +94,11 @@ def update_stock(event, label, type, nbr):
     # si quantity_ret pas specifiée
     category = item["item_id"]["category_id"]["label"]
 
-    today = datetime.now().date()
-    date_start = datetime.strptime(event.date_start, '%Y-%m-%d')#%H:%M')
-    date_end = datetime.strptime(event.date_end, '%Y-%m-%d')
-    date_start = (date_start - timedelta(days=2)).date()
-    date_end = (date_end + timedelta(days=1)).date()
+    today = datetime.now()
+    date_start = datetime.strptime(event.date_start, '%a, %d %b %Y %H:%M:%S %Z')
+    date_end = datetime.strptime(event.date_end, '%a, %d %b %Y %H:%M:%S %Z')
+    date_start = (date_start - timedelta(days=2))
+    date_end = (date_end + timedelta(days=1))
 
     if today == date_start and actual_stock >= nbr:
         update_stock = {

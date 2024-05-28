@@ -36,7 +36,7 @@ def analyseMsg(body: str):
         return True
     elif (event.name.lower().find("journée portes ouvertes") != -1) or (event.name.lower().find("jpo") != -1) or (event.name.lower().find("soirée portes ouvertes") != -1) or (event.name.lower().find("spo") != -1):
         # Besoin des kakémonos (VE, Ingé, Bachelor, CIN, BIOST, International, Génériques) + plaquettes + goodies
-        # reserve_item(event = event, label="Goodies", nbr=event.contact_objective)
+        reserve_item(event = event, label="Goodies", nbr=event.contact_objective)
         # reserve_item(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
         update_stock(event, "Kakémonos", "Ingé/Bachelors", event.contact_objective)
         # reserve_item(event = event, type="Kakémonos", label="Ingé/Bachelors", nbr=event.contact_objective)

@@ -32,7 +32,7 @@ def ValidateEvent():
             # return True # à décommenter pour lancer l'alerte toutes les 2 heures si action non réalisée
     return False
 
-# Si validateEvent retourne True, créez un fichier temporaire
+# Si validateEvent retourne True, crée un fichier temporaire
 if ValidateEvent():
     with open('/tmp/validate_event.tmp', 'w') as f:
         f.write('True')

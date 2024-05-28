@@ -25,38 +25,39 @@ def update_current_stock():
     for event in filtered_events:
         print("event : ", event)
         reserve_items = scan_reserved_items(event) 
-        # il faut que la table reserved_item soit remplie correctement car je n'ai rien pour le moment
         for item in items:
             for reserve_item in reserve_items:
-                if item["id"] == reserve_item["item_id"]:
-                    item["quantity"] -= reserve_item["quantity"]
+                if item["id"] == reserve_item["item_location_id"]["item_id"]["id"]:
                     update_stock = {
-                        "name": item["name"],
-                        "quantity": item["quantity"],
-                        "location.id": item["location_id"],
-                        "category": item["category_id"],
+                        "name": item["item_id"]["name"],
+                        "quantity": item["quantity"] - reserve_item["quantity"],
+                        "location.id": item["location_id"]["id"],
+                        "category": item["item_id"]["category_id"]["id"],
                     }
                     data = urllib.parse.urlencode(update_stock).encode()
-                    req =  urllib.request.Request(f"{api_stock}/item/{item['id']}/{item['location_id']}", data=data, method="PUT")
+                    req =  urllib.request.Request(f"{api_stock}/item/{item['id']}/{item['location_id']['id']}", data=data, method="PUT")
                     resp = urllib.request.urlopen(req)
-    print("oui : ", reserve_items)
+    print(reserve_items)
+    return reserve_items
     
 
 def scan_reserved_items(event):
     reserve_items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/reservedItem/getAll"))
     filtered_reserved_items = [reserve_item 
                                for reserve_item in reserve_items 
-                                if reserve_item["eventId"] == event["id"]]
+                                if reserve_item["event_id"]["id"] == event["id"]]
     return filtered_reserved_items
 
 def scan_events():
+    # problème au niveau des dates : les heures ne seront pas prises en compte 
+    # suite au getAll on a accès qu'aux jours et pas aux heures/minutes
     events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
     current_date = datetime.now()
     filtered_events = [
         event for event in events 
             if ( 
-            datetime.strptime(event['date_start'], "%Y-%m-%d") - timedelta(days=2) <= current_date and
-            datetime.strptime(event['date_end'], "%Y-%m-%d") + timedelta(days=1) >= current_date)
+            datetime.strptime(event['date_start'], '%a, %d %b %Y %H:%M:%S %Z') - timedelta(days=2) <= current_date and
+            datetime.strptime(event['date_end'], '%a, %d %b %Y %H:%M:%S %Z') + timedelta(days=1) >= current_date)
     ]
     return filtered_events
         
