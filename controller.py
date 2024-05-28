@@ -111,6 +111,7 @@ def update_stock(event, label, type, nbr):
         req =  urllib.request.Request(f"{api_stock}/item/{item_id}/{location_id}", data=data, method="PUT")
         resp = urllib.request.urlopen(req)
     elif today == date_start and actual_stock <= nbr:
+        # Alerte stock insuffisant
         abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
     elif quantity_ret != -1 and today == date_end and event.status["label"] == "Fini":
         update_stock = {

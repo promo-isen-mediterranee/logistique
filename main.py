@@ -1,9 +1,9 @@
 from customTypes import _event
-from controller import urllib_to_json, update_stock
+from controller import urllib_to_json
 import urllib.request
 import json
-from controller import reserve_item
-from messaging import send_email
+from controller import *
+from messaging import send_email, update_current_stock
 import os
 from dotenv import load_dotenv
 
@@ -74,8 +74,8 @@ def analyseMsg(body: str):
 
 
 if __name__ == "__main__":
-    send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")    
+    # send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")    
     events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
     for e in events:
         checkMsg(f"[Event]{e}")
-    
+    update_current_stock()

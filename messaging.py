@@ -1,25 +1,65 @@
 import pika
 import smtplib
+import os
+import urllib3
+import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import os
+from datetime import timedelta
 
-import urllib3
+
 from controller import *
 from dotenv import load_dotenv
 
 load_dotenv()
 api_user = os.getenv('API_USER')
+api_stock = os.getenv('API_STOCK')
+api_event = os.getenv('API_EVENT')
 
 channel = None
 
+def update_current_stock():
+    reserve_items = []
+    items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/item/getAll"))
+    filtered_events = scan_events()
+    for event in filtered_events:
+        print("event : ", event)
+        reserve_items = scan_reserved_items(event) 
+        # il faut que la table reserved_item soit remplie correctement car je n'ai rien pour le moment
+        for item in items:
+            for reserve_item in reserve_items:
+                if item["id"] == reserve_item["item_id"]:
+                    item["quantity"] -= reserve_item["quantity"]
+                    update_stock = {
+                        "name": item["name"],
+                        "quantity": item["quantity"],
+                        "location.id": item["location_id"],
+                        "category": item["category_id"],
+                    }
+                    data = urllib.parse.urlencode(update_stock).encode()
+                    req =  urllib.request.Request(f"{api_stock}/item/{item['id']}/{item['location_id']}", data=data, method="PUT")
+                    resp = urllib.request.urlopen(req)
+    print("oui : ", reserve_items)
+    
 
-# reserve_item(event, type: str = "", label: str = "", nbr: int = 0)
-# get_overlapping_events(event)
-# find_item(name: str = "", type:str = "")
-# update_stock(event, label, type, nbr)
-# minimal_stock(event, type, label)
+def scan_reserved_items(event):
+    reserve_items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/reservedItem/getAll"))
+    filtered_reserved_items = [reserve_item 
+                               for reserve_item in reserve_items 
+                                if reserve_item["eventId"] == event["id"]]
+    return filtered_reserved_items
 
+def scan_events():
+    events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
+    current_date = datetime.now()
+    filtered_events = [
+        event for event in events 
+            if ( 
+            datetime.strptime(event['date_start'], "%Y-%m-%d") - timedelta(days=2) <= current_date and
+            datetime.strptime(event['date_end'], "%Y-%m-%d") + timedelta(days=1) >= current_date)
+    ]
+    return filtered_events
+        
 
 # A MODIFIER UNE FOIS QUE ROLE EST IMPLEMENTE -------------------------------------
 def send_email(subject, alert, sender, receiver, role="Responsable"):
@@ -116,8 +156,8 @@ def get_mail_from_role(searchRole: str):
     if searchMail == []:
         return None
     return searchMail
-
-def send_email_to_role(subject, alert, sender, role):
+# A modifier pour tester le script Crontab !!!
+def send_email_to_role(subject, alert, sender, role = "Responsable"):
     receiver = get_mail_from_role(role)
     if receiver == None:
         return f'Rôle fourni non trouvé, {role}', 404
