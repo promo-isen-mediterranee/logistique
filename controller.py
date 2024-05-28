@@ -3,13 +3,14 @@ from os import abort
 import urllib.request, urllib.parse
 import json
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from messaging import urllib_to_json
 
-load_dotenv()
+
+# load_dotenv()
 api_event = os.getenv('API_EVENT')
 api_stock = os.getenv('API_STOCK')
-
+api_user = os.getenv('API_USER')
 
 def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
     """

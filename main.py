@@ -3,7 +3,7 @@ from controller import urllib_to_json
 import urllib.request
 import json
 from controller import *
-from messaging import send_email, update_current_stock
+from messaging import send_email, send_email_to_role, send_request, update_current_stock
 import os
 from dotenv import load_dotenv
 
@@ -74,8 +74,10 @@ def analyseMsg(body: str):
 
 
 if __name__ == "__main__":
-    # send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")    
-    events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
+    # send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")
+    events = send_request(f"{api_event}/getAll")
+    
     for e in events:
         checkMsg(f"[Event]{e}")
-    update_current_stock()
+    send_email_to_role("Alerte : Evènement imminent, 7 jours restants !", 
+                        f"L'évènement {e['name']} commence dans 7 jours, veuillez finir la logistique au plus vite !")

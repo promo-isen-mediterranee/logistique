@@ -1,21 +1,23 @@
 import pika
 import smtplib
 import os
-import urllib3
 import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import timedelta
 
 from controller import *
-from dotenv import load_dotenv
 
-load_dotenv()
 api_user = os.getenv('API_USER')
 api_stock = os.getenv('API_STOCK')
 api_event = os.getenv('API_EVENT')
 
 channel = None
+
+def send_request(url):
+    headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
+    req = Request(url, headers=headers)
+    return urllib_to_json(urlopen(req))
 
 def update_current_stock():
     reserve_items = []
@@ -70,9 +72,36 @@ def scan_events():
         
 
 # A MODIFIER UNE FOIS QUE ROLE EST IMPLEMENTE -------------------------------------
-def send_email(subject, alert, sender, receiver, role="Responsable"):
+def send_email_to_role(subject, alert, role = "ROLE_RESPONSABLE"):
+    receiver = get_mail_from_role(role)
+    print(receiver)
+    # if receiver == None:
+    #     return f'Rôle fourni non trouvé, {role}', 404
+    # for mail in receiver:
+    #     send_email(subject, alert, mail, role)
+    # return f'Email envoyé à {role}', 200
+
+from urllib.request import Request, urlopen
+
+def get_mail_from_role(searchRole: str):
+    url = f"{api_user}/auth/getRoles"
+    headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
+    req = Request(url, headers=headers)
+    allRole = urllib_to_json(urlopen(req))
+
+    searchMail = []
+    print(allRole)
+    # for role in allRole:
+    #     if role["role"] == searchRole:
+    #         searchMail.append(role["id_role"]["id_user"]["mail"])
+    # if searchMail == []:
+    #     return None
+    # return searchMail
+
+def send_email(subject, alert, receiver, role="Responsable"):
     msg = MIMEMultipart('alternative')
 
+    sender = "alex.olivier.2502@gmail.com" # A modifier pour y intégrer le mail de l'ISEN
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = receiver
@@ -154,24 +183,6 @@ def send_email(subject, alert, sender, receiver, role="Responsable"):
     s.send_message(msg)
     print("Email sent successfully")
     s.quit()
-
-def get_mail_from_role(searchRole: str):
-    allRole = urllib_to_json(urllib3.request.urlopen(f"{api_user}/auth/getAll"))
-    searchMail = []
-    for role in allRole:
-        if role["role"] == searchRole:
-            searchMail.append(role["email"])
-    if searchMail == []:
-        return None
-    return searchMail
-# A modifier pour tester le script Crontab !!!
-def send_email_to_role(subject, alert, sender, role = "Responsable"):
-    receiver = get_mail_from_role(role)
-    if receiver == None:
-        return f'Rôle fourni non trouvé, {role}', 404
-    for mail in receiver:
-        send_email(subject, alert, sender, mail, role)
-    return f'Email envoyé à {role}', 200
 
 
 def urllib_to_json(byte_obj):
