@@ -4,17 +4,11 @@ import urllib.request, urllib.parse
 import json
 import os
 from dotenv import load_dotenv
+from messaging import urllib_to_json
 
 load_dotenv()
 api_event = os.getenv('API_EVENT')
 api_stock = os.getenv('API_STOCK')
-
-
-def urllib_to_json(byte_obj):
-    events = byte_obj.read()
-    encoding = byte_obj.info().get_content_charset('utf-8')
-    JSON_object = json.loads(events.decode(encoding))
-    return JSON_object
 
 
 def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
@@ -117,7 +111,7 @@ def update_stock(event, label, type, nbr):
         req =  urllib.request.Request(f"{api_stock}/item/{item_id}/{location_id}", data=data, method="PUT")
         resp = urllib.request.urlopen(req)
     elif today == date_start and actual_stock <= nbr:
-        # TODO -> Alerte : stock insuffisant
+        # Alerte stock insuffisant
         abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
     elif quantity_ret != -1 and today == date_end and event.status["label"] == "Fini":
         update_stock = {

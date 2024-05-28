@@ -1,23 +1,81 @@
 import pika
 import smtplib
+import os
+import urllib3
+import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from datetime import timedelta
+
+
+from controller import *
+from dotenv import load_dotenv
+
+load_dotenv()
+api_user = os.getenv('API_USER')
+api_stock = os.getenv('API_STOCK')
+api_event = os.getenv('API_EVENT')
 
 channel = None
 
+def update_current_stock():
+    reserve_items = []
+    items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/item/getAll"))
+    filtered_events = scan_events()
+    for event in filtered_events:
+        print("event : ", event)
+        reserve_items = scan_reserved_items(event) 
+        # il faut que la table reserved_item soit remplie correctement car je n'ai rien pour le moment
+        for item in items:
+            for reserve_item in reserve_items:
+                if item["id"] == reserve_item["item_id"]:
+                    item["quantity"] -= reserve_item["quantity"]
+                    update_stock = {
+                        "name": item["name"],
+                        "quantity": item["quantity"],
+                        "location.id": item["location_id"],
+                        "category": item["category_id"],
+                    }
+                    data = urllib.parse.urlencode(update_stock).encode()
+                    req =  urllib.request.Request(f"{api_stock}/item/{item['id']}/{item['location_id']}", data=data, method="PUT")
+                    resp = urllib.request.urlopen(req)
+    print("oui : ", reserve_items)
+    
+
+def scan_reserved_items(event):
+    reserve_items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/reservedItem/getAll"))
+    filtered_reserved_items = [reserve_item 
+                               for reserve_item in reserve_items 
+                                if reserve_item["eventId"] == event["id"]]
+    return filtered_reserved_items
+
+def scan_events():
+    events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
+    current_date = datetime.now()
+    filtered_events = [
+        event for event in events 
+            if ( 
+            datetime.strptime(event['date_start'], "%Y-%m-%d") - timedelta(days=2) <= current_date and
+            datetime.strptime(event['date_end'], "%Y-%m-%d") + timedelta(days=1) >= current_date)
+    ]
+    return filtered_events
+        
+
+# A MODIFIER UNE FOIS QUE ROLE EST IMPLEMENTE -------------------------------------
 def send_email(subject, alert, sender, receiver, role="Responsable"):
     msg = MIMEMultipart('alternative')
 
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = receiver
-
+    
     html1 = f"""
     <!DOCTYPE html>
     <html>
     <head>
     <title>Notification IMS Promo</title>
     """
+
     css1 = """
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; }
@@ -25,8 +83,26 @@ def send_email(subject, alert, sender, receiver, role="Responsable"):
         .content { margin: 20px; }
         .footer { background: #f0f0f0; padding: 10px; text-align: center; }
         img { max-width: 100%; }
+        .btn {
+            background-color: #005AA7; /* Bleu ISEN */
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            border: none;
+        }
+        .btn:hover {
+            background-color: #FFD700; /* Jaune ISEN */
+            color: #005AA7;
+        }
     </style>
     """
+
     html2 = f"""
     </head>
     <body>
@@ -39,7 +115,7 @@ def send_email(subject, alert, sender, receiver, role="Responsable"):
             <p>Une alerte importante a été détectée dans notre application. Veuillez vérifier immédiatement pour prendre les mesures nécessaires.</p>
             <p>Voici un aperçu de l'alerte :</p>
             <p>{alert}</p>
-            <p>Pour plus de détails, accédez à l'application IMS Promo.</p>
+            <p><a href="https://promo.prinv.isen.fr/home" class="btn">Accéder à l'application</a></p>
         </div>
         <div class="footer">
             <p>Merci de votre attention,</p>
@@ -59,16 +135,43 @@ def send_email(subject, alert, sender, receiver, role="Responsable"):
     s = smtplib.SMTP(server_name, server_port, local_hostname='localhost')
     s.starttls()
 
+    # ---------------------------
     # Login to the SMTP server
     password = "Rpwnwqy#4250216!"
     s.login(sender, password)
     s.set_debuglevel(1)
+    # ---------------------------
 
     # Send the email
     s.send_message(msg)
     print("Email sent successfully")
     s.quit()
-    
+
+def get_mail_from_role(searchRole: str):
+    allRole = urllib_to_json(urllib3.request.urlopen(f"{api_user}/auth/getAll"))
+    searchMail = []
+    for role in allRole:
+        if role["role"] == searchRole:
+            searchMail.append(role["email"])
+    if searchMail == []:
+        return None
+    return searchMail
+# A modifier pour tester le script Crontab !!!
+def send_email_to_role(subject, alert, sender, role = "Responsable"):
+    receiver = get_mail_from_role(role)
+    if receiver == None:
+        return f'Rôle fourni non trouvé, {role}', 404
+    for mail in receiver:
+        send_email(subject, alert, sender, mail, role)
+    return f'Email envoyé à {role}', 200
+
+
+def urllib_to_json(byte_obj):
+    events = byte_obj.read()
+    encoding = byte_obj.info().get_content_charset('utf-8')
+    JSON_object = json.loads(events.decode(encoding))
+    return JSON_object
+
 def on_connected(connection):
     """Called when we are fully connected to RabbitMQ"""
     print("Connected to RabbitMQ")
