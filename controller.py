@@ -22,7 +22,6 @@ def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
     reserve_request = {
         "eventId": event.id,
         "item_locationId": item_location_id,
-        "status": False,
         "quantity": nbr,
     }
     overlapping = get_overlapping_events(event)
