@@ -7,7 +7,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import timedelta
 
-
 from controller import *
 from dotenv import load_dotenv
 
@@ -23,21 +22,29 @@ def update_current_stock():
     items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/item/getAll"))
     filtered_events = scan_events()
     for event in filtered_events:
-        print("event : ", event)
         reserve_items = scan_reserved_items(event) 
         for item in items:
-            for reserve_item in reserve_items:
-                if item["id"] == reserve_item["item_location_id"]["item_id"]["id"]:
+            for reserve_item in reserve_items:        
+                if (item["item_id"]["id"] == reserve_item["item_location_id"]["item_id"]["id"]) and (reserve_item["status"] == False):
+                    item["quantity"] -= reserve_item["quantity"]
                     update_stock = {
                         "name": item["item_id"]["name"],
-                        "quantity": item["quantity"] - reserve_item["quantity"],
+                        "quantity": item["quantity"],
                         "location.id": item["location_id"]["id"],
                         "category": item["item_id"]["category_id"]["id"],
                     }
+                    update_status  = {
+                        "eventId": event["id"],
+                        "item_locationId": reserve_item["item_location_id"]["id"],
+                        "quantity": reserve_item["quantity"],
+                        "status": True
+                    }
+                    data_stat = urllib.parse.urlencode(update_status).encode()
+                    req_stat =  urllib.request.Request(f"{api_stock}/reservedItem/edit/{event['id']}/{item['id']}", data=data_stat, method="PUT")
+                    resp_stat = urllib.request.urlopen(req_stat)   
                     data = urllib.parse.urlencode(update_stock).encode()
-                    req =  urllib.request.Request(f"{api_stock}/item/{item['id']}/{item['location_id']['id']}", data=data, method="PUT")
-                    resp = urllib.request.urlopen(req)
-    print(reserve_items)
+                    req =  urllib.request.Request(f"{api_stock}/item/{item['item_id']['id']}/{item['location_id']['id']}", data=data, method="PUT")
+                    resp = urllib.request.urlopen(req)    
     return reserve_items
     
 

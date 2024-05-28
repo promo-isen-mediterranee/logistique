@@ -38,7 +38,7 @@ def analyseMsg(body: str):
         # Besoin des kakémonos (VE, Ingé, Bachelor, CIN, BIOST, International, Génériques) + plaquettes + goodies
         reserve_item(event = event, label="Goodies", nbr=event.contact_objective)
         # reserve_item(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
-        update_stock(event, "Kakémonos", "Ingé/Bachelors", event.contact_objective)
+        # update_stock(event, "Kakémonos", "Ingé/Bachelors", event.contact_objective)
         # reserve_item(event = event, type="Kakémonos", label="Ingé/Bachelors", nbr=event.contact_objective)
         # reserve_item(event = event, type="Kakémonos", label="CIN", nbr=event.contact_objective)
         # reserve_item(event = event, type="Kakémonos", label="BIOST", nbr=event.contact_objective)
