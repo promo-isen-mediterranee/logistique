@@ -28,10 +28,11 @@ def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
     overlapping = get_overlapping_events(event)
     if nbr > actual_stock:
         send_email_to_role( "Alerte : Stock insuffisant",
-                            f"Manque de stock pour {label}, lors de la réservation pour l'evenement {event.name}",
+                            f"Manque de stock pour {type} {label}, lors de la réservation pour l'evenement {event.name}",
                             role = "Admin")
         # Changer de role si nécessaire
-        abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
+        return 0
+        # abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
 
     predicted = 0        
     i = 0
@@ -43,7 +44,7 @@ def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
                 i+=1
   
     if actual_stock - predicted < nbr:
-        send_email_to_role(f"Alerte : Stock prédit insuffisant", "Manque de stock pour {label}", role = "Admin")
+        send_email_to_role(f"Alerte : Stock prédit insuffisant", f"Manque de stock pour {label}", role = "Admin")
         # Changer de role si nécessaire
         abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
     data = parse.urlencode(reserve_request).encode()
@@ -123,7 +124,7 @@ def update_stock(event, label, type, nbr):
         req =  Request(f"{api_stock}/item/{item_id}/{location_id}", data=data, method="PUT", headers = headers)
         return urllib_to_json(urlopen(req))
     elif today == date_start and actual_stock <= nbr:
-        send_email_to_role(f"Alerte : Stock insuffisant", "Manque de stock pour {label}", role = "Admin")
+        send_email_to_role(f"Alerte : Stock insuffisant", f"Manque de stock pour {type} {label}", role = "Admin")
         abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
     elif quantity_ret != -1 and today == date_end and event.status["label"] == "Fini":
         update_stock = {

@@ -36,12 +36,12 @@ def analyseMsg(body: str):
     elif (event.name.lower().find("journée portes ouvertes") != -1) or (event.name.lower().find("jpo") != -1) or (event.name.lower().find("soirée portes ouvertes") != -1) or (event.name.lower().find("spo") != -1):
         # Besoin des kakémonos (VE, Ingé, Bachelor, CIN, BIOST, International, Génériques) + plaquettes + goodies
         reserve_item(event = event, label="Goodies", nbr=event.contact_objective)
-        # reserve_item(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
+        reserve_item(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
         # update_stock(event, "Kakémonos", "Ingé/Bachelors", event.contact_objective)
-        # reserve_item(event = event, type="Kakémonos", label="Ingé/Bachelors", nbr=event.contact_objective)
-        # reserve_item(event = event, type="Kakémonos", label="CIN", nbr=event.contact_objective)
-        # reserve_item(event = event, type="Kakémonos", label="BIOST", nbr=event.contact_objective)
-        # reserve_item(event = event, label="FISE", nbr=event.contact_objective)
+        reserve_item(event = event, type="Kakémonos", label="Ingé/Bachelors", nbr=event.contact_objective)
+        reserve_item(event = event, type="Kakémonos", label="CIN", nbr=event.contact_objective)
+        reserve_item(event = event, type="Kakémonos", label="BIOST", nbr=event.contact_objective)
+        reserve_item(event = event, type="Brochures", label="FISE", nbr=event.contact_objective)
         return True
     elif event.name.find("Retour lycée") != -1 or event.name.find("Intervention devant classe") != -1:
         # Besoin de plaquettes
@@ -64,10 +64,10 @@ def analyseMsg(body: str):
         return True
     else:
         # Besoin des kakémonos en fonction de la taille du stand + plaquettes + goodies + bâches
-        # reserve_item(event = event, type="Goodies", label="Stylos", nbr=event.contact_objective)
-        # reserve_item(event = event, label="FISE", nbr=event.contact_objective or 100)
-        # reserve_item(event = event, label="Puissance Alpha Générale", nbr=event.contact_objective or 100)
-        # reserve_item(event = event, label="Kakémonos", nbr=int(event.contact_objective/3) or 33)
+        reserve_item(event = event, type="Goodies", label="Stylos", nbr=event.contact_objective)
+        reserve_item(event = event, type="Brochures", label="FISE", nbr=event.contact_objective or 100)
+        reserve_item(event = event, label="Puissance Alpha Générale", nbr=event.contact_objective or 100)
+        reserve_item(event = event, label="Kakémonos", nbr=int(event.contact_objective/3) or 33)
         return True
 
 
@@ -77,4 +77,4 @@ if __name__ == "__main__":
     events = send_request(f"{api_event}/getAll")
     for e in events:
         checkMsg(f"[Event]{e}")
-    update_current_stock()
+    # update_current_stock()

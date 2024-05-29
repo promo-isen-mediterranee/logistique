@@ -32,7 +32,7 @@ def update_current_stock():
                     item["quantity"] -= reserve_item["quantity"]
                     if item["quantity"] <= 0:
                         send_email_to_role("Alerte : Stock insuffisant", 
-                                           f"Manque de stock pour {item['item_id']['id']} lors de la réservation pour l'evenement {event['name']}",
+                                           f"Manque de stock pour {item['item_id']['category_id']['label']} {item['item_id']['id']} lors de la réservation pour l'evenement {event['name']}",
                                            role = "Admin")
                         os.abort(400, "Erreur lors de la mise à jour du stock, quantité insuffisante")
                     update_stock = {
@@ -89,9 +89,8 @@ def get_mail_from_role(searchRole: str):
     allUsers = send_request(f"{api_user}/getAllUsers")
     searchMail = []
     for user in allUsers:
-        for role in user["roles"]:
-            if role["label"] == searchRole:
-                searchMail.append(user["user"]["mail"])
+        if user["role"]["label"] == searchRole:
+            searchMail.append(user["user"]["mail"])
     if searchMail == []:
         return None
     return searchMail
