@@ -35,13 +35,8 @@ def analyseMsg(body: str):
         return True
     elif (event.name.lower().find("journée portes ouvertes") != -1) or (event.name.lower().find("jpo") != -1) or (event.name.lower().find("soirée portes ouvertes") != -1) or (event.name.lower().find("spo") != -1):
         # Besoin des kakémonos (VE, Ingé, Bachelor, CIN, BIOST, International, Génériques) + plaquettes + goodies
-<<<<<<< Updated upstream
         reserve_item(event = event, label="Goodies", nbr=event.contact_objective)
         reserve_item(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
-=======
-        reserve_item(event = event, label="Goodies", nbr= event.contact_objective)
-        # reserve_item(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
->>>>>>> Stashed changes
         # update_stock(event, "Kakémonos", "Ingé/Bachelors", event.contact_objective)
         reserve_item(event = event, type="Kakémonos", label="Ingé/Bachelors", nbr=event.contact_objective)
         reserve_item(event = event, type="Kakémonos", label="CIN", nbr=event.contact_objective)
@@ -82,10 +77,6 @@ if __name__ == "__main__":
     events = send_request(f"{api_event}/getAll")
     for e in events:
         checkMsg(f"[Event]{e}")
-<<<<<<< Updated upstream
-    # update_current_stock()
-=======
     update_current_stock()
     while True:
         pass
->>>>>>> Stashed changes

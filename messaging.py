@@ -32,11 +32,7 @@ def update_current_stock():
                     item["quantity"] -= reserve_item["quantity"]
                     if item["quantity"] <= 0:
                         send_email_to_role("Alerte : Stock insuffisant", 
-<<<<<<< Updated upstream
                                            f"Manque de stock pour {item['item_id']['category_id']['label']} {item['item_id']['id']} lors de la réservation pour l'evenement {event['name']}",
-=======
-                                           f"Manque de stock pour {item['item_id']['id']} lors de la réservation pour l'evenement {event['name']}",
->>>>>>> Stashed changes
                                            role = "Admin")
                         os.abort(400, "Erreur lors de la mise à jour du stock, quantité insuffisante")
                     update_stock = {
