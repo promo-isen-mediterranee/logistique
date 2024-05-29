@@ -49,7 +49,7 @@ def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
     data = parse.urlencode(reserve_request).encode()
     headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
     req =  Request(f"{api_stock}/reserveItem", data=data, method="POST", headers=headers)
-    # return urllib_to_json(urlopen(req))
+    return urllib_to_json(urlopen(req))
     # reserved_item une seule entrée dans la base pour chaque objet lié à un évènement
 
 def get_overlapping_events(event):

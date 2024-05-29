@@ -1,7 +1,7 @@
 from customTypes import _event
 import json
 from controller import *
-from messaging import send_email_to_role, send_request, update_current_stock
+from messaging import send_request, update_current_stock
 import os
 
 # TODO -> utiliser la fonction update_stock() une fois tout les jours ?
@@ -9,7 +9,7 @@ import os
 # Et met à jour le stock en conséquence
 
 # TODO -> CHECKLIST !!!!!
-# Pour chaque item_reçu, reserve_item(event, type, label, nbr)
+# Pour chaque item_reçu de la checklist, reserve_item(event, type, label, nbr)
 
 api_event = os.getenv('API_EVENT')
 
@@ -35,7 +35,7 @@ def analyseMsg(body: str):
         return True
     elif (event.name.lower().find("journée portes ouvertes") != -1) or (event.name.lower().find("jpo") != -1) or (event.name.lower().find("soirée portes ouvertes") != -1) or (event.name.lower().find("spo") != -1):
         # Besoin des kakémonos (VE, Ingé, Bachelor, CIN, BIOST, International, Génériques) + plaquettes + goodies
-        reserve_item(event = event, label="Goodies", nbr=2000)
+        reserve_item(event = event, label="Goodies", nbr=event.contact_objective)
         # reserve_item(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
         # update_stock(event, "Kakémonos", "Ingé/Bachelors", event.contact_objective)
         # reserve_item(event = event, type="Kakémonos", label="Ingé/Bachelors", nbr=event.contact_objective)

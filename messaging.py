@@ -4,11 +4,10 @@ import os
 import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import timedelta
+from datetime import datetime, timedelta
 from urllib.request import Request, urlopen
 from urllib import parse, request
 
-from controller import *
 
 api_user = os.getenv('API_USER')
 api_stock = os.getenv('API_STOCK')
@@ -33,9 +32,9 @@ def update_current_stock():
                     item["quantity"] -= reserve_item["quantity"]
                     if item["quantity"] <= 0:
                         send_email_to_role("Alerte : Stock insuffisant", 
-                                           f"Manque de stock pour {item["item_id"]["id"]} lors de la réservation pour l'evenement {event["name"]}",
+                                           f"Manque de stock pour {item['item_id']['id']} lors de la réservation pour l'evenement {event['name']}",
                                            role = "Admin")
-                        abort(400, "Erreur lors de la mise à jour du stock, quantité insuffisante")
+                        os.abort(400, "Erreur lors de la mise à jour du stock, quantité insuffisante")
                     update_stock = {
                         "name": item["item_id"]["name"],
                         "quantity": item["quantity"],
