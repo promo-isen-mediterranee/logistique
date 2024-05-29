@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from os import abort
 from urllib import request, parse
 from urllib.request import urlopen, Request
-import json
 import os
 from messaging import send_email_to_role, send_request, urllib_to_json
 
