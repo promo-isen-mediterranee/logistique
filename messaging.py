@@ -89,8 +89,9 @@ def get_mail_from_role(searchRole: str):
     allUsers = send_request(f"{api_user}/getAllUsers")
     searchMail = []
     for user in allUsers:
-        if user["role"]["label"] == searchRole:
-            searchMail.append(user["user"]["mail"])
+        for role in user["roles"]:
+            if role["label"] == searchRole:
+                searchMail.append(user["user"]["mail"])
     if searchMail == []:
         return None
     return searchMail
