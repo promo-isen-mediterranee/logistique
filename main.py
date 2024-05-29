@@ -1,9 +1,15 @@
-import requests
 from customTypes import _event
 import json
 from controller import *
-from messaging import send_email, send_email_to_role, send_request, update_current_stock
+from messaging import send_email_to_role, send_request
 import os
+
+# TODO -> utiliser la fonction update_stock() une fois tout les jours ?
+# La fonction check si la date d'aujourd'hui est incluse dans l'intervalle de date de l'event 
+# Et met à jour le stock en conséquence
+
+# TODO -> CHECKLIST !!!!!
+# Pour chaque item_reçu, reserve_item(event, type, label, nbr)
 
 api_event = os.getenv('API_EVENT')
 
@@ -11,11 +17,6 @@ def checkMsg(body: str):
     if body.startswith("[Event]"):
         analyseMsg(body)
 
-# TODO -> utiliser la fonction update_stock() une fois tout les jours ?
-# La fonction check si la date d'aujourd'hui est incluse dans l'intervalle de date de l'event 
-# Et met à jour le stock en conséquence
-
-# TODO -> CHECKLIST !!!!!
 
 def analyseMsg(body: str):
     newBody = body.split("{", 1)[1]
@@ -72,7 +73,6 @@ def analyseMsg(body: str):
 
 if __name__ == "__main__":
     print("Service Logistique started")
-    # send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")
 
     events = send_request(f"{api_event}/getAll")
     for e in events:

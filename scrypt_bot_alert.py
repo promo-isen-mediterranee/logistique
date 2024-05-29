@@ -1,7 +1,8 @@
 import os
 import urllib.request
 from datetime import datetime, timedelta
-from messaging import send_email_to_role, urllib_to_json
+from messaging import send_email_to_role, urllib_to_json, send_request
+from urllib.request import Request, urlopen
 
 
 #commandes Unix pour lancer le script
@@ -15,7 +16,7 @@ api_event = os.getenv('API_EVENT')
 
 
 def ValidateEvent():
-    event = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
+    event = send_request(f"{api_event}/getAll")
     if event["status"] == "A faire":
         for e in event:
             if datetime.now() == e["date_start"] - timedelta(days=7):
@@ -30,7 +31,7 @@ def ValidateEvent():
             elif datetime.now() <= e["date_start"] - timedelta(days=2):
                 send_email_to_role("Alerte : Evènement imminent, 2 jours restants !", 
                                 f"L'évènement {e['name']} commence dans 2 jours, veuillez finir la logistique au plus vite !")
-                # return True # à décommenter pour lancer l'alerte toutes les 2 heures si action non réalisée
+                return True # à décommenter pour lancer l'alerte toutes les 2 heures si action non réalisée
     return False
 
 # Si validateEvent retourne True, crée un fichier temporaire

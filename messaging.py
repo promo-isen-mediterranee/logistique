@@ -61,8 +61,6 @@ def scan_reserved_items(event):
     return filtered_reserved_items
 
 def scan_events():
-    # problème au niveau des dates : les heures ne seront pas prises en compte 
-    # suite au getAll on a accès qu'aux jours et pas aux heures/minutes
     events = send_request(f"{api_event}/getAll")
     current_date = datetime.now()
     filtered_events = [
@@ -74,7 +72,6 @@ def scan_events():
     return filtered_events
         
 
-# A MODIFIER UNE FOIS QUE ROLE EST IMPLEMENTE -------------------------------------
 def send_email_to_role(subject, alert, role = "Admin"):
     receiver = get_mail_from_role(role)
     if receiver == None:
@@ -97,7 +94,7 @@ def get_mail_from_role(searchRole: str):
 def send_email(subject, alert, receiver, role="Responsable"):
     msg = MIMEMultipart('alternative')
 
-    sender = "marc.etavard@isen.yncrea.fr" # A modifier pour y intégrer le mail de l'ISEN
+    sender = "marc.etavard@isen.yncrea.fr" # TODO A modifier pour y intégrer le mail de l'ISEN
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = receiver
@@ -148,7 +145,7 @@ def send_email(subject, alert, receiver, role="Responsable"):
             <p>Une alerte importante a été détectée dans notre application. Veuillez vérifier immédiatement pour prendre les mesures nécessaires.</p>
             <p>Voici un aperçu de l'alerte :</p>
             <p>{alert}</p>
-            <p><a href="https://promo.prinv.isen.fr/home" class="btn">Accéder à l'application</a></p>
+            <p><a href="https://promo.prinv.isen.fr" class="btn">Accéder à l'application</a></p>
         </div>
         <div class="footer">
             <p>Merci de votre attention,</p>
@@ -182,11 +179,10 @@ def send_email(subject, alert, receiver, role="Responsable"):
 
 
 def urllib_to_json(byte_obj):
-    print(byte_obj.read())
-    # events = byte_obj.read()
-    # encoding = byte_obj.info().get_content_charset('utf-8')
-    # JSON_object = json.loads(events.decode(encoding))
-    # return JSON_object
+    events = byte_obj.read()
+    encoding = byte_obj.info().get_content_charset('utf-8')
+    JSON_object = json.loads(events.decode(encoding))
+    return JSON_object
 
 def on_connected(connection):
     """Called when we are fully connected to RabbitMQ"""
@@ -224,6 +220,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         connection.close()
         connection.ioloop.start()
-
-# Look at https://github.com/pika/pika/blob/main/examples/asynchronous_publisher_example.py
-# for publishing example
