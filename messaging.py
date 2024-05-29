@@ -182,10 +182,11 @@ def send_email(subject, alert, receiver, role="Responsable"):
 
 
 def urllib_to_json(byte_obj):
-    events = byte_obj.read()
-    encoding = byte_obj.info().get_content_charset('utf-8')
-    JSON_object = json.loads(events.decode(encoding))
-    return JSON_object
+    print(byte_obj.read())
+    # events = byte_obj.read()
+    # encoding = byte_obj.info().get_content_charset('utf-8')
+    # JSON_object = json.loads(events.decode(encoding))
+    # return JSON_object
 
 def on_connected(connection):
     """Called when we are fully connected to RabbitMQ"""

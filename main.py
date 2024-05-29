@@ -1,3 +1,4 @@
+import requests
 from customTypes import _event
 import json
 from controller import *
@@ -70,7 +71,9 @@ def analyseMsg(body: str):
 
 
 if __name__ == "__main__":
+    print("Service Logistique started")
     # send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")
+
     events = send_request(f"{api_event}/getAll")
     for e in events:
         checkMsg(f"[Event]{e}")
