@@ -80,8 +80,8 @@ def send_email_to_role(subject, alert, role = "Admin"):
     receiver = get_mail_from_role(role)
     if receiver == None:
         return f'Rôle fourni non trouvé, {role}', 404
-    # for mail in receiver:
-    send_email(subject, alert, receiver[0], role)
+    for mail in receiver:
+        send_email(subject, alert, mail, role)
     return f'Email envoyé à {role}', 200
 
 
