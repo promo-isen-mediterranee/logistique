@@ -97,7 +97,7 @@ def get_mail_from_role(searchRole: str):
 def send_email(subject, alert, receiver, role="Responsable"):
     msg = MIMEMultipart('alternative')
 
-    sender = "marc.etavard25@gmail.com" # A modifier pour y intégrer le mail de l'ISEN
+    sender = "marc.etavard@isen.yncrea.fr" # A modifier pour y intégrer le mail de l'ISEN
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = receiver
@@ -164,11 +164,11 @@ def send_email(subject, alert, receiver, role="Responsable"):
 
     try:
         server_name = "smtp.office365.com"
-        server_port = 587
+        server_port = 25
 
-        s = smtplib.SMTP(server_name, server_port, timeout=30)
+        s = smtplib.SMTP(server_name, server_port, local_hostname="localhost")
         s.starttls()
-        password = "YA^!giK#FgEqByDxN5mDnk6HZ"
+        password = "U4FZ4Y!A9"
         s.login(sender, password)
         s.set_debuglevel(1)
 
@@ -179,8 +179,6 @@ def send_email(subject, alert, receiver, role="Responsable"):
 
     except smtplib.SMTPException as e:
         print("Error: unable to send email. Error message:", e)
-
-
 
 
 def urllib_to_json(byte_obj):
