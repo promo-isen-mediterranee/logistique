@@ -1,7 +1,7 @@
 from customTypes import _event
 import json
 from controller import *
-from messaging import send_email_to_role, send_request
+from messaging import send_email_to_role, send_request, update_current_stock
 import os
 
 # TODO -> utiliser la fonction update_stock() une fois tout les jours ?
@@ -35,7 +35,7 @@ def analyseMsg(body: str):
         return True
     elif (event.name.lower().find("journée portes ouvertes") != -1) or (event.name.lower().find("jpo") != -1) or (event.name.lower().find("soirée portes ouvertes") != -1) or (event.name.lower().find("spo") != -1):
         # Besoin des kakémonos (VE, Ingé, Bachelor, CIN, BIOST, International, Génériques) + plaquettes + goodies
-        reserve_item(event = event, label="Goodies", nbr=event.contact_objective)
+        reserve_item(event = event, label="Goodies", nbr=2000)
         # reserve_item(event = event, type="Kakémonos", label="Vie Etudiante", nbr=event.contact_objective)
         # update_stock(event, "Kakémonos", "Ingé/Bachelors", event.contact_objective)
         # reserve_item(event = event, type="Kakémonos", label="Ingé/Bachelors", nbr=event.contact_objective)
@@ -77,5 +77,4 @@ if __name__ == "__main__":
     events = send_request(f"{api_event}/getAll")
     for e in events:
         checkMsg(f"[Event]{e}")
-    send_email_to_role("Alerte : Evènement imminent, 7 jours restants !", 
-                        f"L'évènement {e['name']} commence dans 7 jours, veuillez finir la logistique au plus vite !")
+    update_current_stock()

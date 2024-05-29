@@ -27,7 +27,9 @@ def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
     }
     overlapping = get_overlapping_events(event)
     if nbr > actual_stock:
-        send_email_to_role(f"Alerte : Stock insuffisant", "Manque de stock pour {label}", role = "Admin")
+        send_email_to_role( "Alerte : Stock insuffisant",
+                            f"Manque de stock pour {label}, lors de la réservation pour l'evenement {event.name}",
+                            role = "Admin")
         # Changer de role si nécessaire
         abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
 

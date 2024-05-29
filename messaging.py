@@ -31,6 +31,11 @@ def update_current_stock():
             for reserve_item in reserve_items:        
                 if (item["item_id"]["id"] == reserve_item["item_location_id"]["item_id"]["id"]) and (reserve_item["status"] == False):
                     item["quantity"] -= reserve_item["quantity"]
+                    if item["quantity"] <= 0:
+                        send_email_to_role("Alerte : Stock insuffisant", 
+                                           f"Manque de stock pour {item["item_id"]["id"]} lors de la réservation pour l'evenement {event["name"]}",
+                                           role = "Admin")
+                        abort(400, "Erreur lors de la mise à jour du stock, quantité insuffisante")
                     update_stock = {
                         "name": item["item_id"]["name"],
                         "quantity": item["quantity"],
