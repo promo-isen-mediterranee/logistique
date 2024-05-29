@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta
 from os import abort
-import urllib.request, urllib.parse
+from urllib import request, parse
+from urllib.request import urlopen, Request
 import json
 import os
-# from dotenv import load_dotenv
-from messaging import urllib_to_json
+from messaging import send_request, urllib_to_json
 
 
-# load_dotenv()
 api_event = os.getenv('API_EVENT')
 api_stock = os.getenv('API_STOCK')
 api_user = os.getenv('API_USER')
@@ -35,18 +34,17 @@ def reserve_item(event, type: str = "", label: str = "", nbr: int = 0):
     if overlapping != []:
         for e in overlapping:
             if e["id"] != event.id:
-                reserved_items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/reservedItem/getAll/{event.id}"))
+                reserved_items = send_request(f"{api_stock}/reservedItem/getAll/{event.id}")
                 predicted+=reserved_items[i]["quantity"]
                 i+=1
   
     if actual_stock - predicted < nbr:
         #TODO Alerte Stock insufisant
         pass
-    data = urllib.parse.urlencode(reserve_request).encode()
-    req =  urllib.request.Request(f"{api_stock}/reserveItem", data=data, method="POST")
-    # resp_reserved = urllib.request.urlopen(req)
-
-    return 0
+    data = parse.urlencode(reserve_request).encode()
+    headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
+    req =  Request(f"{api_stock}/reserveItem", data=data, method="POST", headers=headers)
+    # return urllib_to_json(urlopen(req))
 
 def get_overlapping_events(event):
     """
@@ -59,7 +57,7 @@ def get_overlapping_events(event):
     overlapping_events = []
 
     if event.status["label"] == "A faire":
-        events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
+        events = send_request(f"{api_event}/getAll")
 
         date_start = datetime.strptime(event.date_start, '%a, %d %b %Y %H:%M:%S %Z')
         date_end = datetime.strptime(event.date_end, '%a, %d %b %Y %H:%M:%S %Z')
@@ -76,7 +74,7 @@ def get_overlapping_events(event):
 
 
 def find_item(name: str = "", type:str = ""):
-    materials = urllib_to_json(urllib.request.urlopen(f"{api_stock}/item/getAll"))
+    materials = send_request(f"{api_stock}/item/getAll")
     for material in materials:
         if material["item_id"]["name"] == name and material["item_id"]["category_id"]["label"] == type:
             return material
@@ -107,9 +105,10 @@ def update_stock(event, label, type, nbr):
             "location.id": location_id,
             "category": category,
         }
-        data = urllib.parse.urlencode(update_stock).encode()
-        req =  urllib.request.Request(f"{api_stock}/item/{item_id}/{location_id}", data=data, method="PUT")
-        resp = urllib.request.urlopen(req)
+        data = parse.urlencode(update_stock).encode()
+        headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
+        req =  Request(f"{api_stock}/item/{item_id}/{location_id}", data=data, method="PUT", headers = headers)
+        return urllib_to_json(urlopen(req))
     elif today == date_start and actual_stock <= nbr:
         # Alerte stock insuffisant
         abort(400, "Erreur lors de la réservation des items, quantité insuffisante")
@@ -121,9 +120,10 @@ def update_stock(event, label, type, nbr):
             "category": category,
         }
         gain = (quantity_ret / nbr) * 100 # TODO
-        data = urllib.parse.urlencode(update_stock).encode()
-        req =  urllib.request.Request(f"{api_stock}/item/{item_id}/{location_id}", data=data, method="PUT")
-        resp = urllib.request.urlopen(req)
+        data = parse.urlencode(update_stock).encode()
+        headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
+        req =  request.Request(f"{api_stock}/item/{item_id}/{location_id}", data=data, method="PUT", headers = headers)
+        return urllib_to_json(urlopen(req))
     return 0
 
 

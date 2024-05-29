@@ -12,9 +12,9 @@ ENV DB_USER=postgres
 ENV DB_PASSWORD=postgres
 ENV DB_NAME=logistisen_db
 
-ENV API_EVENT=http://localhost:5000/event
-ENV API_STOCK=http://localhost:8000/stock
-ENV API_USER=http://localhost:5050/auth
+ENV API_EVENT=http://api_event:5000/event
+ENV API_STOCK=http://api_stock:8000/stock
+ENV API_USER=http://api_auth:5050/auth
 
 ###############################
 #  Configuration de l'image   #

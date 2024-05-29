@@ -5,6 +5,8 @@ import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import timedelta
+from urllib.request import Request, urlopen
+from urllib import parse, request
 
 from controller import *
 
@@ -21,7 +23,7 @@ def send_request(url):
 
 def update_current_stock():
     reserve_items = []
-    items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/item/getAll"))
+    items = send_request(f"{api_stock}/item/getAll")
     filtered_events = scan_events()
     for event in filtered_events:
         reserve_items = scan_reserved_items(event) 
@@ -41,17 +43,18 @@ def update_current_stock():
                         "quantity": reserve_item["quantity"],
                         "status": True
                     }
-                    data_stat = urllib.parse.urlencode(update_status).encode()
-                    req_stat =  urllib.request.Request(f"{api_stock}/reservedItem/edit/{event['id']}/{item['id']}", data=data_stat, method="PUT")
-                    resp_stat = urllib.request.urlopen(req_stat)   
-                    data = urllib.parse.urlencode(update_stock).encode()
-                    req =  urllib.request.Request(f"{api_stock}/item/{item['item_id']['id']}/{item['location_id']['id']}", data=data, method="PUT")
-                    resp = urllib.request.urlopen(req)    
+                    data_stat = parse.urlencode(update_status).encode()
+                    headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
+                    req_stat =  Request(f"{api_stock}/reservedItem/edit/{event['id']}/{item['id']}", data=data_stat, method="PUT", headers = headers)
+                    resp_stat = urllib_to_json(urlopen(req_stat))
+                    data = parse.urlencode(update_stock).encode()
+                    req =  request.Request(f"{api_stock}/item/{item['item_id']['id']}/{item['location_id']['id']}", data=data, method="PUT", headers = headers)
+                    resp = urllib_to_json(urlopen(req))
     return reserve_items
     
 
 def scan_reserved_items(event):
-    reserve_items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/reservedItem/getAll"))
+    reserve_items = send_request(f"{api_stock}/reservedItem/getAll")
     filtered_reserved_items = [reserve_item 
                                for reserve_item in reserve_items 
                                 if reserve_item["event_id"]["id"] == event["id"]]
@@ -60,7 +63,7 @@ def scan_reserved_items(event):
 def scan_events():
     # problème au niveau des dates : les heures ne seront pas prises en compte 
     # suite au getAll on a accès qu'aux jours et pas aux heures/minutes
-    events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
+    events = send_request(f"{api_event}/getAll")
     current_date = datetime.now()
     filtered_events = [
         event for event in events 
@@ -72,36 +75,29 @@ def scan_events():
         
 
 # A MODIFIER UNE FOIS QUE ROLE EST IMPLEMENTE -------------------------------------
-def send_email_to_role(subject, alert, role = "ROLE_RESPONSABLE"):
+def send_email_to_role(subject, alert, role = "Admin"):
     receiver = get_mail_from_role(role)
-    print(receiver)
-    # if receiver == None:
-    #     return f'Rôle fourni non trouvé, {role}', 404
+    if receiver == None:
+        return f'Rôle fourni non trouvé, {role}', 404
     # for mail in receiver:
-    #     send_email(subject, alert, mail, role)
-    # return f'Email envoyé à {role}', 200
+    send_email(subject, alert, receiver[0], role)
+    return f'Email envoyé à {role}', 200
 
-from urllib.request import Request, urlopen
 
 def get_mail_from_role(searchRole: str):
-    url = f"{api_user}/auth/getRoles"
-    headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
-    req = Request(url, headers=headers)
-    allRole = urllib_to_json(urlopen(req))
-
+    allUsers = send_request(f"{api_user}/getAllUsers")
     searchMail = []
-    print(allRole)
-    # for role in allRole:
-    #     if role["role"] == searchRole:
-    #         searchMail.append(role["id_role"]["id_user"]["mail"])
-    # if searchMail == []:
-    #     return None
-    # return searchMail
+    for user in allUsers:
+        if user["role"]["label"] == searchRole:
+            searchMail.append(user["user"]["mail"])
+    if searchMail == []:
+        return None
+    return searchMail
 
 def send_email(subject, alert, receiver, role="Responsable"):
     msg = MIMEMultipart('alternative')
 
-    sender = "alex.olivier.2502@gmail.com" # A modifier pour y intégrer le mail de l'ISEN
+    sender = "marc.etavard25@gmail.com" # A modifier pour y intégrer le mail de l'ISEN
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = receiver
@@ -165,24 +161,26 @@ def send_email(subject, alert, receiver, role="Responsable"):
     html_part = MIMEText(html1 + css1 + html2, 'html')
 
     msg.attach(html_part)
-    
-    server_name = "smtp.office365.com"
-    server_port = 587
-    # Connect to the SMTP server
-    s = smtplib.SMTP(server_name, server_port, local_hostname='localhost')
-    s.starttls()
 
-    # ---------------------------
-    # Login to the SMTP server
-    password = "Rpwnwqy#4250216!"
-    s.login(sender, password)
-    s.set_debuglevel(1)
-    # ---------------------------
+    try:
+        server_name = "smtp.office365.com"
+        server_port = 587
 
-    # Send the email
-    s.send_message(msg)
-    print("Email sent successfully")
-    s.quit()
+        s = smtplib.SMTP(server_name, server_port, timeout=30)
+        s.starttls()
+        password = "YA^!giK#FgEqByDxN5mDnk6HZ"
+        s.login(sender, password)
+        s.set_debuglevel(1)
+
+        # Send the email
+        s.send_message(msg)
+        print("Email sent successfully")
+        s.quit()
+
+    except smtplib.SMTPException as e:
+        print("Error: unable to send email. Error message:", e)
+
+
 
 
 def urllib_to_json(byte_obj):

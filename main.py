@@ -1,13 +1,8 @@
 from customTypes import _event
-from controller import urllib_to_json
-import urllib.request
 import json
 from controller import *
 from messaging import send_email, send_email_to_role, send_request, update_current_stock
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 api_event = os.getenv('API_EVENT')
 
@@ -18,6 +13,8 @@ def checkMsg(body: str):
 # TODO -> utiliser la fonction update_stock() une fois tout les jours ?
 # La fonction check si la date d'aujourd'hui est incluse dans l'intervalle de date de l'event 
 # Et met à jour le stock en conséquence
+
+# TODO -> CHECKLIST !!!!!
 
 def analyseMsg(body: str):
     newBody = body.split("{", 1)[1]
@@ -47,7 +44,6 @@ def analyseMsg(body: str):
     elif event.name.find("Retour lycée") != -1 or event.name.find("Intervention devant classe") != -1:
         # Besoin de plaquettes
         reserve_item(event = event, label="FISE",nbr=event.contact_objective or 50)
-        update_stock(event, type = "Brochures", label = "FISE", nbr = event.contact_objective)
         return True
     elif event.name.find("Accueil lycée") != -1:
         # Besoin des kakémonos (Générique et Chiffres clés) + plaquettes + goodies sans sac
@@ -76,7 +72,6 @@ def analyseMsg(body: str):
 if __name__ == "__main__":
     # send_email("test", "test", "alex.olivier@isen.yncrea.fr", "marc.etavard@isen.yncrea.fr")
     events = send_request(f"{api_event}/getAll")
-    
     for e in events:
         checkMsg(f"[Event]{e}")
     send_email_to_role("Alerte : Evènement imminent, 7 jours restants !", 
