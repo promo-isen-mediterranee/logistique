@@ -1,0 +1,4 @@
+pika
+flask
+requests
+psycopg2
