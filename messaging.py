@@ -1,25 +1,28 @@
 import pika
 import smtplib
 import os
-import urllib3
 import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import timedelta
+from datetime import datetime, timedelta
+from urllib.request import Request, urlopen
+from urllib import parse, request
 
-from controller import *
-from dotenv import load_dotenv
 
-load_dotenv()
 api_user = os.getenv('API_USER')
 api_stock = os.getenv('API_STOCK')
 api_event = os.getenv('API_EVENT')
 
 channel = None
 
+def send_request(url):
+    headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
+    req = Request(url, headers=headers)
+    return urllib_to_json(urlopen(req))
+
 def update_current_stock():
     reserve_items = []
-    items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/item/getAll"))
+    items = send_request(f"{api_stock}/item/getAll")
     filtered_events = scan_events()
     for event in filtered_events:
         reserve_items = scan_reserved_items(event) 
@@ -27,6 +30,11 @@ def update_current_stock():
             for reserve_item in reserve_items:        
                 if (item["item_id"]["id"] == reserve_item["item_location_id"]["item_id"]["id"]) and (reserve_item["status"] == False):
                     item["quantity"] -= reserve_item["quantity"]
+                    if item["quantity"] <= 0:
+                        send_email_to_role("Alerte : Stock insuffisant", 
+                                           f"Manque de stock pour {item['item_id']['category_id']['label']} {item['item_id']['id']} lors de la réservation pour l'evenement {event['name']}",
+                                           role = "Admin")
+                        os.abort(400, "Erreur lors de la mise à jour du stock, quantité insuffisante")
                     update_stock = {
                         "name": item["item_id"]["name"],
                         "quantity": item["quantity"],
@@ -39,26 +47,25 @@ def update_current_stock():
                         "quantity": reserve_item["quantity"],
                         "status": True
                     }
-                    data_stat = urllib.parse.urlencode(update_status).encode()
-                    req_stat =  urllib.request.Request(f"{api_stock}/reservedItem/edit/{event['id']}/{item['id']}", data=data_stat, method="PUT")
-                    resp_stat = urllib.request.urlopen(req_stat)   
-                    data = urllib.parse.urlencode(update_stock).encode()
-                    req =  urllib.request.Request(f"{api_stock}/item/{item['item_id']['id']}/{item['location_id']['id']}", data=data, method="PUT")
-                    resp = urllib.request.urlopen(req)    
+                    data_stat = parse.urlencode(update_status).encode()
+                    headers = {'X-BYPASS': os.getenv("BYPASS_TOKEN")}
+                    req_stat =  Request(f"{api_stock}/reservedItem/edit/{event['id']}/{item['id']}", data=data_stat, method="PUT", headers = headers)
+                    resp_stat = urllib_to_json(urlopen(req_stat))
+                    data = parse.urlencode(update_stock).encode()
+                    req =  request.Request(f"{api_stock}/item/{item['item_id']['id']}/{item['location_id']['id']}", data=data, method="PUT", headers = headers)
+                    resp = urllib_to_json(urlopen(req))
     return reserve_items
     
 
 def scan_reserved_items(event):
-    reserve_items = urllib_to_json(urllib.request.urlopen(f"{api_stock}/reservedItem/getAll"))
+    reserve_items = send_request(f"{api_stock}/reservedItem/getAll")
     filtered_reserved_items = [reserve_item 
                                for reserve_item in reserve_items 
                                 if reserve_item["event_id"]["id"] == event["id"]]
     return filtered_reserved_items
 
 def scan_events():
-    # problème au niveau des dates : les heures ne seront pas prises en compte 
-    # suite au getAll on a accès qu'aux jours et pas aux heures/minutes
-    events = urllib_to_json(urllib.request.urlopen(f"{api_event}/getAll"))
+    events = send_request(f"{api_event}/getAll")
     current_date = datetime.now()
     filtered_events = [
         event for event in events 
@@ -69,10 +76,29 @@ def scan_events():
     return filtered_events
         
 
-# A MODIFIER UNE FOIS QUE ROLE EST IMPLEMENTE -------------------------------------
-def send_email(subject, alert, sender, receiver, role="Responsable"):
+def send_email_to_role(subject, alert, role = "Admin"):
+    receiver = get_mail_from_role(role)
+    if receiver == None:
+        return f'Rôle fourni non trouvé, {role}', 404
+    for mail in receiver:
+        send_email(subject, alert, mail, role)
+    return f'Email envoyé à {role}', 200
+
+
+def get_mail_from_role(searchRole: str):
+    allUsers = send_request(f"{api_user}/getAllUsers")
+    searchMail = []
+    for user in allUsers:
+        if user["role"]["label"] == searchRole:
+            searchMail.append(user["user"]["mail"])
+    if searchMail == []:
+        return None
+    return searchMail
+
+def send_email(subject, alert, receiver, role="Responsable"):
     msg = MIMEMultipart('alternative')
 
+    sender = "marc.etavard@isen.yncrea.fr" # TODO A modifier pour y intégrer le mail de l'ISEN
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = receiver
@@ -123,7 +149,7 @@ def send_email(subject, alert, sender, receiver, role="Responsable"):
             <p>Une alerte importante a été détectée dans notre application. Veuillez vérifier immédiatement pour prendre les mesures nécessaires.</p>
             <p>Voici un aperçu de l'alerte :</p>
             <p>{alert}</p>
-            <p><a href="https://promo.prinv.isen.fr/home" class="btn">Accéder à l'application</a></p>
+            <p><a href="https://promo.prinv.isen.fr" class="btn">Accéder à l'application</a></p>
         </div>
         <div class="footer">
             <p>Merci de votre attention,</p>
@@ -136,42 +162,24 @@ def send_email(subject, alert, sender, receiver, role="Responsable"):
     html_part = MIMEText(html1 + css1 + html2, 'html')
 
     msg.attach(html_part)
-    
-    server_name = "smtp.office365.com"
-    server_port = 587
-    # Connect to the SMTP server
-    s = smtplib.SMTP(server_name, server_port, local_hostname='localhost')
-    s.starttls()
 
-    # ---------------------------
-    # Login to the SMTP server
-    password = "Rpwnwqy#4250216!"
-    s.login(sender, password)
-    s.set_debuglevel(1)
-    # ---------------------------
+    try:
+        server_name = "smtp.office365.com"
+        server_port = 25
 
-    # Send the email
-    s.send_message(msg)
-    print("Email sent successfully")
-    s.quit()
+        s = smtplib.SMTP(server_name, server_port, local_hostname="localhost")
+        s.starttls()
+        password = ""
+        s.login(sender, password)
+        s.set_debuglevel(1)
 
-def get_mail_from_role(searchRole: str):
-    allRole = urllib_to_json(urllib3.request.urlopen(f"{api_user}/auth/getAll"))
-    searchMail = []
-    for role in allRole:
-        if role["role"] == searchRole:
-            searchMail.append(role["email"])
-    if searchMail == []:
-        return None
-    return searchMail
-# A modifier pour tester le script Crontab !!!
-def send_email_to_role(subject, alert, sender, role = "Responsable"):
-    receiver = get_mail_from_role(role)
-    if receiver == None:
-        return f'Rôle fourni non trouvé, {role}', 404
-    for mail in receiver:
-        send_email(subject, alert, sender, mail, role)
-    return f'Email envoyé à {role}', 200
+        # Send the email
+        s.send_message(msg)
+        print("Email sent successfully")
+        s.quit()
+
+    except smtplib.SMTPException as e:
+        print("Error: unable to send email. Error message:", e)
 
 
 def urllib_to_json(byte_obj):
@@ -216,6 +224,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         connection.close()
         connection.ioloop.start()
-
-# Look at https://github.com/pika/pika/blob/main/examples/asynchronous_publisher_example.py
-# for publishing example

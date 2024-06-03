@@ -85,6 +85,10 @@ def find_item(name: str = "", type:str = ""):
 
 
 def update_stock(event, label, type, nbr):
+    """
+    Fonction qui met à jour le stock d'un item si la date d'aujourd'hui est comprise dans l'intervalle
+    j - 2 <= aujourd'hui <= j + 1
+    """
     item = find_item(name=label, type=type)
     item_id = item["item_id"]["id"]
     location_id = item["location_id"]["id"]
